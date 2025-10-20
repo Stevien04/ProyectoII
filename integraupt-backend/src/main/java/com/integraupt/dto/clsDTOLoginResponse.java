@@ -1,39 +1,35 @@
 package com.integraupt.dto;
 
 /**
- * DTO para respuesta de login exitoso
- * 
- * @author IntegraUPT Team
+ * DTO para respuesta del login de usuario
+ *
+ * @author IntegraUPT
  * @version 1.0.0
  */
 public class clsDTOLoginResponse {
 
     private boolean success;
     private String message;
-    private clsDTOPerfilResponse perfil;
-    private String token; // Para futuras implementaciones JWT
+    private Integer userId;
+    private String email;
+    private String token;
 
-    // ========================================
-    // CONSTRUCTORES
-    // ========================================
-
-    public clsDTOLoginResponse() {}
+    public clsDTOLoginResponse() {
+    }
 
     public clsDTOLoginResponse(boolean success, String message) {
         this.success = success;
         this.message = message;
     }
 
-    public clsDTOLoginResponse(boolean success, String message, clsDTOPerfilResponse perfil) {
+    public clsDTOLoginResponse(boolean success, String message, Integer userId, String email) {
         this.success = success;
         this.message = message;
-        this.perfil = perfil;
+        this.userId = userId;
+        this.email = email;
     }
 
-    // ========================================
-    // GETTERS Y SETTERS
-    // ========================================
-
+    // Getters y Setters
     public boolean isSuccess() {
         return success;
     }
@@ -50,12 +46,20 @@ public class clsDTOLoginResponse {
         this.message = message;
     }
 
-    public clsDTOPerfilResponse getPerfil() {
-        return perfil;
+    public Integer getUserId() {
+        return userId;
     }
 
-    public void setPerfil(clsDTOPerfilResponse perfil) {
-        this.perfil = perfil;
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getToken() {

@@ -1,0 +1,11 @@
+com\integraupt\entidad\clsEntidadEvento.class
+com\integraupt\repositorio\clsRepositorioEspacio.class
+com\integraupt\repositorio\clsRepositorioReserva.class
+com\integraupt\entidad\clsEntidadAuditoria.class
+com\integraupt\entidad\clsEntidadPerfil.class
+com\integraupt\entidad\clsEntidadEspacio.class
+com\integraupt\entidad\clsEntidadReserva.class
+com\integraupt\repositorio\clsRepositorioEvento.class
+com\integraupt\repositorio\clsRepositorioPerfil.class
+com\integraupt\config\clsConfigCors.class
+IntegraUPT\IntegraUPTApplication.class

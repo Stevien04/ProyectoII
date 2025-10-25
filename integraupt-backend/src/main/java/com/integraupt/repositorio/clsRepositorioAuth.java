@@ -6,16 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 /**
- * Repositorio para acceder a los perfiles de usuario registrados.
+ * Repositorio para acceder a los usuarios registrados.
  */
 @Repository
-public interface clsRepositorioAuth extends JpaRepository<clsEntidadUsuario, String> {
-
+public interface clsRepositorioAuth extends JpaRepository<clsEntidadUsuario, Integer> {
     Optional<clsEntidadUsuario> findFirstByCodigoIgnoreCase(String codigo);
 
     Optional<clsEntidadUsuario> findFirstByEmailIgnoreCase(String email);
 
-    Optional<clsEntidadUsuario> findFirstByTipoLoginIgnoreCaseAndCodigoIgnoreCase(String tipoLogin, String codigo);
-
-    Optional<clsEntidadUsuario> findFirstByTipoLoginIgnoreCaseAndEmailIgnoreCase(String tipoLogin, String email);
 }

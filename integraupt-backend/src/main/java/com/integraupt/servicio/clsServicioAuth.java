@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Servicio encargado de manejar la lógica de autenticación de usuarios.
@@ -22,6 +24,44 @@ import org.springframework.util.StringUtils;
 public class clsServicioAuth {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(clsServicioAuth.class);
+
+    private static final Map<Integer, String> ROL_NOMBRES = Map.of(
+            1, "Profesor",
+            2, "Estudiante",
+            3, "Administrador"
+    );
+
+    private static final Map<Integer, String> FACULTAD_NOMBRES = Map.of(
+            1, "FAING",
+            2, "FADE",
+            3, "FACEM",
+            4, "FAEDCOH",
+            5, "FACSA",
+            6, "FAU"
+    );
+
+    private static final Map<Integer, String> ESCUELA_NOMBRES = Map.ofEntries(
+            Map.entry(1, "Ing. Civil"),
+            Map.entry(2, "Ing. de Sistemas"),
+            Map.entry(3, "Ing. Electronica"),
+            Map.entry(4, "Ing. Agroindustrial"),
+            Map.entry(5, "Ing. Ambiental"),
+            Map.entry(6, "Ing. Industrial"),
+            Map.entry(7, "Derecho"),
+            Map.entry(8, "Ciencias Contables y Financieras"),
+            Map.entry(9, "Economia y Microfinanzas"),
+            Map.entry(10, "Administracion"),
+            Map.entry(11, "Administracion Turistico-Hotel"),
+            Map.entry(12, "Administracion de Negocios Internacionales"),
+            Map.entry(13, "Educacion"),
+            Map.entry(14, "Ciencias de la Comunicacion"),
+            Map.entry(15, "Humanidades - Psicologia"),
+            Map.entry(16, "Medicina Humana"),
+            Map.entry(17, "Odontologia"),
+            Map.entry(18, "Tecnologia Medica"),
+            Map.entry(19, "Arquitectura")
+    );
+
 
     private final clsRepositorioAuth repositorioAuth;
 
@@ -63,25 +103,25 @@ public class clsServicioAuth {
             return clsDTOLoginResponse.error("Credenciales inválidas");
         }
 
-        PerfilDTO perfilDTO = construirPerfil(usuario);
+        PerfilDTO perfilDTO = construirPerfil(usuario, tipoLogin);
         String token = generarTokenBasico(usuario);
 
         return clsDTOLoginResponse.success("Inicio de sesión exitoso", perfilDTO, token);
     }
 
     private Optional<clsEntidadUsuario> buscarUsuarioPorIdentificador(String identificador, String tipoLogin) {
-        if (StringUtils.hasText(tipoLogin)) {
-            Optional<clsEntidadUsuario> porTipo = repositorioAuth
-                    .findFirstByTipoLoginIgnoreCaseAndCodigoIgnoreCase(tipoLogin, identificador)
-                    .or(() -> repositorioAuth.findFirstByTipoLoginIgnoreCaseAndEmailIgnoreCase(tipoLogin, identificador));
-
-            if (porTipo.isPresent()) {
-                return porTipo;
+        Optional<clsEntidadUsuario> usuario = repositorioAuth.findFirstByCodigoIgnoreCase(identificador)
+                .or(() -> repositorioAuth.findFirstByEmailIgnoreCase(identificador));
+        if (usuario.isEmpty()) {
+            return usuario;
             }
+
+
+        if (!StringUtils.hasText(tipoLogin)) {
+            return usuario;
         }
 
-        return repositorioAuth.findFirstByCodigoIgnoreCase(identificador)
-                .or(() -> repositorioAuth.findFirstByEmailIgnoreCase(identificador));
+        return usuario.filter(value -> coincideConTipoLogin(value, tipoLogin));
     }
 
     private String normalizar(String valor) {
@@ -108,27 +148,90 @@ public class clsServicioAuth {
         return passwordAlmacenada.equals(passwordIngresada);
     }
 
-    private PerfilDTO construirPerfil(clsEntidadUsuario usuario) {
+    private PerfilDTO construirPerfil(clsEntidadUsuario usuario, String tipoLoginSolicitado) {
         return new PerfilDTO(
-                usuario.getId(),
+                usuario.getId() != null ? usuario.getId().toString() : null,
                 usuario.getCodigo(),
                 usuario.getNombres(),
                 usuario.getApellidos(),
                 usuario.getEmail(),
-                usuario.getRol(),
-                usuario.getTipoLogin(),
-                usuario.getAvatarUrl(),
-                usuario.getEstado(),
+                mapRol(usuario.getRolId()),
+                determinarTipoLogin(usuario, tipoLoginSolicitado),
+                null,
+                mapEstado(usuario.getEstado()),
                 usuario.getCelular(),
-                usuario.getEscuela(),
-                usuario.getFacultad(),
-                usuario.getGenero(),
+                mapEscuela(usuario.getEscuelaId()),
+                mapFacultad(usuario.getFacultadId()),
+                mapGenero(usuario.getGenero()),
                 usuario.getNumeroDocumento()
         );
     }
 
     private String generarTokenBasico(clsEntidadUsuario usuario) {
-        String payload = usuario.getId() + ":" + Instant.now();
+        String payload = String.valueOf(usuario.getId()) + ":" + Instant.now();
         return Base64.getEncoder().encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private boolean coincideConTipoLogin(clsEntidadUsuario usuario, String tipoLogin) {
+        String normalizado = tipoLogin.toLowerCase(Locale.ROOT);
+        Integer rolId = usuario.getRolId();
+
+        if (rolId == null) {
+            return true;
+        }
+
+        return switch (normalizado) {
+            case "academic", "academico", "académico" -> rolId == 1 || rolId == 2;
+            case "administrative", "administrativo" -> rolId == 3;
+            default -> true;
+        };
+    }
+
+    private String determinarTipoLogin(clsEntidadUsuario usuario, String tipoLoginSolicitado) {
+        if (StringUtils.hasText(tipoLoginSolicitado)) {
+            return tipoLoginSolicitado.trim().toLowerCase(Locale.ROOT);
+        }
+
+        Integer rolId = usuario.getRolId();
+        if (rolId == null) {
+            return null;
+        }
+
+        return (rolId == 3) ? "administrative" : "academic";
+    }
+
+    private String mapRol(Integer rolId) {
+        if (rolId == null) {
+            return null;
+        }
+        return ROL_NOMBRES.getOrDefault(rolId, rolId.toString());
+    }
+
+    private String mapEstado(Integer estado) {
+        if (estado == null) {
+            return null;
+        }
+        return estado == 1 ? "Activo" : "Inactivo";
+    }
+
+    private String mapGenero(Boolean genero) {
+        if (genero == null) {
+            return null;
+        }
+        return genero ? "Masculino" : "Femenino";
+    }
+
+    private String mapFacultad(Integer facultadId) {
+        if (facultadId == null) {
+            return null;
+        }
+        return FACULTAD_NOMBRES.getOrDefault(facultadId, facultadId.toString());
+    }
+
+    private String mapEscuela(Integer escuelaId) {
+        if (escuelaId == null) {
+            return null;
+        }
+        return ESCUELA_NOMBRES.getOrDefault(escuelaId, escuelaId.toString());
     }
 }
